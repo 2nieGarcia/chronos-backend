@@ -31,5 +31,8 @@ data class Room(
     val description: String? = null,
 
     @Column(name = "is_available", nullable = false)
-    val isAvailable: Boolean = true
+    val isAvailable: Boolean = true,
+
+    @Column(name = "has_projector", nullable = false)
+    val hasProjector: Boolean = false
 )

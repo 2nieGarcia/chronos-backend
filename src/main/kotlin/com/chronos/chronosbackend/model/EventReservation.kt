@@ -1,5 +1,6 @@
 package com.chronos.chronosbackend.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -22,6 +23,10 @@ data class EventReservation(
 
     @Column(name = "event_title", nullable = false)
     val eventTitle: String = "",
+
+    @JsonIgnore
+    @Column(name = "title", nullable = false)
+    val legacyTitle: String = eventTitle,
 
     @Column(name = "event_date", nullable = false)
     val eventDate: LocalDate,
@@ -55,5 +60,14 @@ data class EventReservation(
     val expectedAttendees: Int? = null,
 
     @Column(name = "document_url")
-    val documentUrl: String? = null
+    val documentUrl: String? = null,
+
+    @Column(name = "rejected_by")
+    val rejectedBy: String? = null,
+
+    @Column(name = "rejected_at")
+    val rejectedAt: LocalDateTime? = null,
+
+    @Column(name = "rejection_reason")
+    val rejectionReason: String? = null
 )

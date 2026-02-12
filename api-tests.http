@@ -1,0 +1,25 @@
+### 1. Create a Building first (Required for Room)
+POST http://localhost:8080/api/buildings
+Content-Type: application/json
+
+{
+    "name": "Science Block",
+    "location": "North Wing"
+}
+
+### 2. Create a Room (Use the building ID you just created, e.g., 1)
+POST http://localhost:8080/api/rooms
+Content-Type: application/json
+
+{
+    "roomNumber": "305",
+    "roomType": "LABORATORY",
+    "capacity": 50,
+    "floor": 3,
+    "building": {
+        "id": 1
+    }
+}
+
+### 3. Get All Rooms
+GET http://localhost:8080/api/rooms

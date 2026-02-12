@@ -8,6 +8,9 @@ import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 class SecurityConfig {
@@ -18,15 +21,13 @@ class SecurityConfig {
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
-            .csrf { it.disable() } // Disable CSRF for API endpoints
+            .cors { it.configurationSource(corsConfigurationSource()) }
+            .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
-                // Allow public access to Swagger (optional) or Health checks
-                auth.requestMatchers("/public/**").permitAll()
-                // Require Authentication for everything else
                 auth.anyRequest().authenticated()
             }
             .oauth2ResourceServer { oauth2 ->
-                oauth2.jwt { } // Use default JWT validation (validates against Supabase URL)
+                oauth2.jwt { }
             }
 
         return http.build()
@@ -35,7 +36,19 @@ class SecurityConfig {
     @Bean
     fun jwtDecoder(): JwtDecoder {
         return NimbusJwtDecoder.withJwkSetUri(jwkSetUri)
-            .jwsAlgorithm(SignatureAlgorithm.ES256) // Explicitly tell Spring to expect ES256
+            .jwsAlgorithm(SignatureAlgorithm.ES256)
             .build()
+    }
+
+    @Bean
+    fun corsConfigurationSource(): CorsConfigurationSource {
+        val configuration = CorsConfiguration()
+        configuration.allowedOrigins = listOf("http://localhost:3000")
+        configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
+        configuration.allowedHeaders = listOf("*")
+        configuration.allowCredentials = true
+        val source = UrlBasedCorsConfigurationSource()
+        source.registerCorsConfiguration("/**", configuration)
+        return source
     }
 }

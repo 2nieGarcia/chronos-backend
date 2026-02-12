@@ -132,4 +132,39 @@ class EventReservationController(
             ResponseEntity.notFound().build()
         }
     }
+
+    @PutMapping("/{id}/approve")
+    fun approveReservation(
+        @PathVariable id: Int,
+        @RequestBody request: Map<String, String>
+    ): ResponseEntity<EventReservation> {
+        return reservationRepository.findById(id)
+            .map { reservation ->
+                val updated = reservation.copy(
+                    status = ReservationStatus.APPROVED,
+                    approvedBy = request["approved_by"] ?: "System",
+                    approvedAt = java.time.LocalDateTime.now()
+                )
+                ResponseEntity.ok(reservationRepository.save(updated))
+            }
+            .orElse(ResponseEntity.notFound().build())
+    }
+
+    @PutMapping("/{id}/reject")
+    fun rejectReservation(
+        @PathVariable id: Int,
+        @RequestBody request: Map<String, String>
+    ): ResponseEntity<EventReservation> {
+        return reservationRepository.findById(id)
+            .map { reservation ->
+                val updated = reservation.copy(
+                    status = ReservationStatus.REJECTED,
+                    rejectedBy = request["rejected_by"] ?: "System",
+                    rejectedAt = java.time.LocalDateTime.now(),
+                    rejectionReason = request["comments"]
+                )
+                ResponseEntity.ok(reservationRepository.save(updated))
+            }
+            .orElse(ResponseEntity.notFound().build())
+    }
 }
