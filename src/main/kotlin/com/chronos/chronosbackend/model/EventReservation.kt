@@ -20,7 +20,7 @@ data class EventReservation(
     @Column(name = "organization_name", nullable = false)
     val organizationName: String,
 
-    @Column(name = "title", nullable = false)
+    @Column(name = "event_title", nullable = false)
     val eventTitle: String = "",
 
     @Column(name = "event_date", nullable = false)

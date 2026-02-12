@@ -1,21 +1,24 @@
 package com.chronos.chronosbackend.controller
 
+import com.chronos.chronosbackend.dto.ConflictCheckRequest
 import com.chronos.chronosbackend.model.EventReservation
 import com.chronos.chronosbackend.model.ReservationStatus
 import com.chronos.chronosbackend.repository.EventReservationRepository
+import com.chronos.chronosbackend.repository.RoomRepository
 import com.chronos.chronosbackend.service.ConflictResult
 import com.chronos.chronosbackend.service.ConflictService
+import java.time.LocalDate
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.time.LocalDate
 
 @RestController
 @RequestMapping("/api/reservations")
 class EventReservationController(
     private val reservationRepository: EventReservationRepository,
-    private val conflictService: ConflictService
+    private val conflictService: ConflictService,
+    private val roomRepository: RoomRepository
 ) {
 
     @GetMapping
@@ -54,9 +57,18 @@ class EventReservationController(
      */
     @PostMapping
     fun createReservation(@RequestBody request: EventReservation): ResponseEntity<Any> {
+        val roomId = request.room.id
+        if (roomId == null) {
+            return ResponseEntity.badRequest().body(mapOf("error" to "Room ID is required"))
+        }
+
+        // Fetch real room entity. This prevents TransientPropertyValueException
+        val room = roomRepository.findById(roomId).orElse(null)
+            ?: return ResponseEntity.badRequest().body(mapOf("error" to "Room not found"))
+
         // Check for conflicts
         val conflicts = conflictService.findConflicts(
-            roomId = request.room.id!!,
+            roomId = roomId,
             requestedDate = request.eventDate,
             startTime = request.startTime,
             endTime = request.endTime
@@ -71,7 +83,10 @@ class EventReservationController(
             )
         }
 
-        val saved = reservationRepository.save(request)
+        // Create a copy of the request with the managed Room entity
+        val reservationToSave = request.copy(room = room)
+
+        val saved = reservationRepository.save(reservationToSave)
         return ResponseEntity.status(HttpStatus.CREATED).body(saved)
     }
 
@@ -79,9 +94,9 @@ class EventReservationController(
      * Check for conflicts before creating a reservation
      */
     @PostMapping("/check-conflicts")
-    fun checkConflicts(@RequestBody request: EventReservation): ConflictResult {
+    fun checkConflicts(@RequestBody request: ConflictCheckRequest): ConflictResult {
         return conflictService.findConflicts(
-            roomId = request.room.id!!,
+            roomId = request.roomId,
             requestedDate = request.eventDate,
             startTime = request.startTime,
             endTime = request.endTime
